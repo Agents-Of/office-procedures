@@ -157,3 +157,37 @@ minutes until the dispatcher noticed and re-prompted them explicitly to poll
 for it. This is the same underlying failure mode as replying into an existing
 task ID silently dropping delivery — an apparently-successful dispatch call
 is not proof the receiving agent has actually processed the real content.
+
+## 14. Windows Docker recovery: use WSL after the Desktop inference failure
+
+On Victor's Windows workstation, Docker Desktop may fail after reboot with an
+error like `initializing Inference manager ... Docker\\run\\dockerInference`.
+When that appears, do not keep retrying Docker Desktop, reset it, or delete
+Docker data. This is an infrastructure recovery incident, not permission to
+destroy volumes or change application code.
+
+Recovery order:
+
+1. Confirm with `docker info` and record that the Desktop engine is
+   unavailable. Check `com.docker.service`; a failed service start is evidence
+   to move on, not a reason to loop.
+2. Use the configured WSL-backed Docker runtime. From PowerShell, run
+   `wsl -l -v`, then test the configured distribution with
+   `wsl -d <distribution> -- docker info`. Do not invent a distro or change
+   Docker contexts without recording the change.
+3. Run Compose from WSL or through the working WSL Docker context. Mount the
+   real checked-out worktree, never a scratchpad, review copy, or stale demo
+   worktree. Verify `git rev-parse HEAD` and `docker compose config` first.
+4. Keep each agent's Compose project, port, database, and uploads isolated.
+   Never attach a feature worktree to another agent's running volumes. Reset
+   volumes only when explicitly requested.
+5. Verify the mounted branch, commit, mount path, URL, entity counts, routes,
+   and representative role behavior in a real browser. A healthy container or
+   HTTP 200 is not release evidence.
+
+If WSL is unavailable too, report the exact engine and command failure and
+continue with static tests only. Do not claim browser acceptance, staging
+readiness, or a deployable demo. The local DevOps/operator lane owns this
+recovery path; every coding agent must detect the failure, use the documented
+WSL path, and leave a concrete blocker record instead of repeatedly retrying
+the broken Desktop engine.
