@@ -52,11 +52,15 @@ separately-built pieces together). Building integration code before its
 data-layer dependency merges just means redoing it once that dependency
 changes shape.
 
-## 6. Mandatory independent review, every PR
+## 6. Mandatory review, with independent transport when required
 
-No PR merges without a real, posted review comment against the actual diff —
-same rigor whether the reviewer is on this account or a different one.
-Chat approval ("looks good") is not a review.
+No PR merges without a real, posted review comment against the actual diff.
+Chat approval ("looks good") is not a review. When repository policy requires
+an independent review, the reviewer MUST use a different GitHub transport
+account from the PR author. A different card, thread, model, or subagent using
+the same account does not satisfy that account-level gate. The review must
+also name the acting reviewer card; the account proves transport authority,
+not agent identity.
 
 ## 7. Trust but verify — always
 
@@ -96,3 +100,30 @@ isn't actually available, say so plainly and stop — don't silently
 substitute fabricated data and continue as if nothing happened. A fallback
 that isn't clearly labeled as a fallback is worse than no fallback at all;
 whoever reads the result downstream needs to know it isn't real.
+
+## 12. Identity, routing, and startup context
+
+The harness-provided agent context is the startup authority. The process
+working directory is runtime context; do not replace it with an identity folder
+or create a registry that pretends to be the current launch location. Identity
+folders, card files, and local DashBorg projections are supporting provenance,
+not startup authority.
+
+Before claiming, executing, reviewing, or redirecting GitHub work, poll live
+evidence in this order:
+
+1. the current harness task, delegation, or handoff;
+2. the live GitHub Task/Project item, issue, or PR, including Owner Card ID,
+   acting/reviewer identity, dependencies, mentions, and state;
+3. native assignees and review requests, which identify transport accounts;
+4. live GitHub notifications and linked chat/session records;
+5. local DashBorg, cached dashboards, seed files, and Markdown history only as
+   corroboration.
+
+If those sources conflict, stop and report the routing conflict. Every durable
+issue, PR, review, or substantive comment must identify the acting card and
+distinguish it from the GitHub account, harness/tool, and human steward.
+
+The operational lifecycle in this document and the identity attribution rules
+in `github-collaboration` are complementary: neither GitHub account names nor
+local registries are agent authorship.
