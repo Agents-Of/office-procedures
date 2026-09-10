@@ -88,3 +88,11 @@ A relevant value can live in a completely different section than where you
 first looked (a parameter named in a data-model section, its actual default
 value stated in a separate feature-flag-registry section). Read linearly
 before concluding something is unspecified.
+
+## 11. Fail loudly when a real dependency is missing
+
+If a real external dependency (an API, a service, a required data source)
+isn't actually available, say so plainly and stop — don't silently
+substitute fabricated data and continue as if nothing happened. A fallback
+that isn't clearly labeled as a fallback is worse than no fallback at all;
+whoever reads the result downstream needs to know it isn't real.
