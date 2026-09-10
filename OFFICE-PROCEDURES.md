@@ -58,6 +58,17 @@ No PR merges without a real, posted review comment against the actual diff —
 same rigor whether the reviewer is on this account or a different one.
 Chat approval ("looks good") is not a review.
 
+### PFM Codex ↔ Claude same-account review record
+
+Within PlayFieldMultiplier, red-team Codex and blue-team Claude agents may use
+a permanent same-account, comment-based PR review. The comment is a valid
+review gate only if it identifies the author and reviewer card identities,
+their distinct harness/team roles, the exact reviewed head SHA, an explicit
+`APPROVE` or `REQUEST_CHANGES` outcome, and concrete diff/test evidence.
+Native GitHub approval is not implied or claimed. This record never waives
+independent reviewer cognition, actual diff review, checks, merge authorization,
+or any human/product gate.
+
 ## 7. Trust but verify — always
 
 A claim of "done," "fixed," "tests passing," or "verified" is not evidence
