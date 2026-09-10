@@ -127,7 +127,9 @@ clarifying question — needs no rollup.
 
 Real example this rule is written from: a reviewer's comment on
 `PlayFieldMultiplier/LeagueOS#133` flagged a non-idempotent test fixture and
-three uncovered acceptance-criteria axes on the parent story (`#126`). Both
-were real, independently schedulable findings that would have vanished into
-comment history the moment `#126` closed. They belong as their own tracked
-issues, not as paragraphs in a review comment.
+three uncovered acceptance-criteria axes on the parent story (`#126`). The
+fixture defect became its own real issue, `#137`. The three acceptance axes
+were already independently decomposed into live child tasks (`#134`, `#135`,
+`#136`) — check for that decomposition before opening a new issue for a
+finding; a rolled-up finding that duplicates an existing tracked item is the
+same failure mode this rule exists to prevent, just one level up.
