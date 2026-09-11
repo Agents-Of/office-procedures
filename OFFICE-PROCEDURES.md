@@ -157,3 +157,25 @@ minutes until the dispatcher noticed and re-prompted them explicitly to poll
 for it. This is the same underlying failure mode as replying into an existing
 task ID silently dropping delivery — an apparently-successful dispatch call
 is not proof the receiving agent has actually processed the real content.
+
+## 14. Never force-push a shared integration branch
+
+Never commit or push directly to a shared integration branch (`devline`,
+`main`, or equivalent) — always a real feature branch, a real PR against it,
+review, then merge. Never force-push a shared branch under any circumstance.
+A force-push discards whatever the remote had that your local history
+doesn't contain — on your own private feature branch that's a normal rebase;
+on a branch every other agent's PR targets, it silently deletes their merged
+work with no warning to anyone.
+
+Real incident this rule is written from: an agent committed a feature
+directly to `devline` from a stale local checkout and force-pushed it,
+discarding the four most recent commits — an entire merged PR, including two
+real bug fixes landed hours earlier. The lost commits were still reachable by
+SHA (not yet garbage-collected) and were recovered by resetting the branch
+ref back to the pre-force-push commit via the GitHub API, then giving the
+agent's real work its own proper branch and PR against the restored branch.
+Recovery was possible only because the old SHA was still reachable — that is
+luck, not a plan. Treat a discovered force-push to a shared branch as a live
+incident: verify via `compare` whether the new tip is `behind` the old one,
+and if so, recover the old SHA onto the branch before anything else proceeds.
