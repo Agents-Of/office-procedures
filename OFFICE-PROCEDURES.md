@@ -133,3 +133,27 @@ were already independently decomposed into live child tasks (`#134`, `#135`,
 `#136`) — check for that decomposition before opening a new issue for a
 finding; a rolled-up finding that duplicates an existing tracked item is the
 same failure mode this rule exists to prevent, just one level up.
+
+## 13. An A2A notification is not the message — poll for the real content
+
+A one-line "new task from X" banner pasted into a live agent's terminal is a
+wake signal, not the message itself. Receiving that banner and responding
+with a generic acknowledgment ("standing by," "ready to receive") without
+actually querying for the real task content leaves the real work
+unprocessed and invisible to the dispatcher, who cannot tell "received and
+ignored" apart from "never delivered" from their side alone.
+
+On receiving such a banner: query for the real content immediately and act
+on it in the same turn, not just acknowledge the banner exists. On
+dispatching: a send call reporting success confirms delivery to the task
+store, not that the receiving agent has read or acted on the real content —
+check the receiving agent's actual subsequent output for evidence of that
+before assuming the work is moving.
+
+Real example: two separate live agents each received a real, actionable task
+notification, each replied with a generic "standing by" without querying for
+the actual content, and each sat idle with the real work undone for many
+minutes until the dispatcher noticed and re-prompted them explicitly to poll
+for it. This is the same underlying failure mode as replying into an existing
+task ID silently dropping delivery — an apparently-successful dispatch call
+is not proof the receiving agent has actually processed the real content.
