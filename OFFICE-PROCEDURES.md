@@ -107,3 +107,29 @@ isn't actually available, say so plainly and stop — don't silently
 substitute fabricated data and continue as if nothing happened. A fallback
 that isn't clearly labeled as a fallback is worse than no fallback at all;
 whoever reads the result downstream needs to know it isn't real.
+
+## 12. Comments are transient triage — durable findings get their own issue
+
+An issue or PR comment is a place to triage, ask, and confirm — it is not
+where an actionable unit of work permanently lives. If a comment describes
+something independently schedulable (a bug, a scope gap, a missing coverage
+axis, a follow-up task) that would still matter after the comment's parent
+issue or PR closes, open a real issue for it before moving on — cross-linked
+back to the source (e.g. "found while reviewing #N"), with a real type and
+priority label. Once that's done, the comment can be treated as read and
+historical; the issue, not the comment, is the durable, groomable unit that
+gets prioritized, scheduled into a sprint, and closed on its own merits.
+
+The test: if closing the parent issue or merging the parent PR would make
+this finding invisible or unfindable, it needs its own issue number. A
+comment that is purely conversational — an ack, a status ping, a short
+clarifying question — needs no rollup.
+
+Real example this rule is written from: a reviewer's comment on
+`PlayFieldMultiplier/LeagueOS#133` flagged a non-idempotent test fixture and
+three uncovered acceptance-criteria axes on the parent story (`#126`). The
+fixture defect became its own real issue, `#137`. The three acceptance axes
+were already independently decomposed into live child tasks (`#134`, `#135`,
+`#136`) — check for that decomposition before opening a new issue for a
+finding; a rolled-up finding that duplicates an existing tracked item is the
+same failure mode this rule exists to prevent, just one level up.
