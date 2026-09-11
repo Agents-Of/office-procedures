@@ -179,3 +179,23 @@ Recovery was possible only because the old SHA was still reachable — that is
 luck, not a plan. Treat a discovered force-push to a shared branch as a live
 incident: verify via `compare` whether the new tip is `behind` the old one,
 and if so, recover the old SHA onto the branch before anything else proceeds.
+
+## 15. Types and constants live in their own file, never alongside code
+
+Any value that would otherwise be hardcoded -- a constant, an enum, a type --
+is always an externally imported entity, no matter how simple the code
+looks. It never lives in the same file as the logic that uses it.
+
+Real incident this rule is written from: a comment-type constant was defined
+inline in one file; a second file needed the same value but importing it
+would have meant pulling in that whole file's unrelated logic, so it
+duplicated the literal string instead. The two happened to match by
+coincidence -- the moment either one changes without the other being
+touched, the duplicate silently stops matching and whatever depends on it
+breaks with no error.
+
+Standing review check, cheap and always askable: "Are your types in a
+separate file, and did you reuse the common ones instead of restating
+them?" Not a full-repo refactor -- apply it going forward, on every new
+piece of work, so new violations stop being created while existing debt is
+tracked and cleaned up separately.
