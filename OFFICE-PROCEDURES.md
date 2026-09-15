@@ -213,6 +213,25 @@ it.
 
 ### Agent recovery sequence
 
+This is mandatory for every local container task, not only for shared-branch
+work. At the beginning of a coding turn that needs WordPress, Compose, or any
+other container, run the checked-in recovery helper first:
+
+```powershell
+& .\scripts\ensure-kpfm-docker.ps1
+if ($LASTEXITCODE -ne 0) { throw 'Native WSL Docker is unavailable; stop and report the exact output.' }
+```
+
+Run it from this office-procedures checkout, or invoke it by absolute path if
+the agent's starting folder is another worktree. The helper only starts the
+known `KPFM` distro's Docker service and verifies it; it does not reset
+Desktop, remove files, prune volumes, or change application code.
+
+Do not use a successful `docker` client version as proof that the engine is
+available. The Windows client can be installed while its Desktop server is
+dead. The only accepted engine check for this machine is `wsl -d KPFM --
+docker info` (or the helper's equivalent).
+
 Run the following checks from PowerShell after a reboot or whenever the
 Desktop engine is unavailable:
 
@@ -269,3 +288,12 @@ available. The local DevOps/operator lane is responsible for repairing or
 reprovisioning the workstation runtime and for any Desktop configuration
 changes. No coding agent should repair a Desktop lock by destroying shared
 Docker state or by changing product code.
+
+### After a reboot
+
+The recovery helper is intentionally the first step again after every system
+reboot. Do not wait for Docker Desktop to finish starting, and do not click
+"Reset to factory defaults". Once the helper passes, run Compose through the
+same WSL distro and use a unique project name for the worktree. When the work
+is complete, record the WSL engine check, mounted worktree commit, and browser
+URL in the task evidence.
