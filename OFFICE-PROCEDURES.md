@@ -199,3 +199,73 @@ separate file, and did you reuse the common ones instead of restating
 them?" Not a full-repo refactor -- apply it going forward, on every new
 piece of work, so new violations stop being created while existing debt is
 tracked and cleaned up separately.
+
+## 16. Windows Docker Desktop failure: recover through the native WSL engine
+
+On Victor's workstation, Docker Desktop is not the dependable local runtime.
+After a reboot it can repeatedly fail while starting its inference manager,
+with an error mentioning
+`C:\\Users\\victorb\\AppData\\Local\\Docker\\run\\dockerInference` and a
+file that cannot be accessed. That message is a runtime boundary, not an
+application failure. Do not keep restarting Desktop, use "Reset to factory
+defaults," delete Docker volumes, or change application code to work around
+it.
+
+### Agent recovery sequence
+
+Run the following checks from PowerShell after a reboot or whenever the
+Desktop engine is unavailable:
+
+```powershell
+docker info
+wsl -l -v
+wsl -d KPFM -- docker info
+wsl -d KPFM -- docker compose version
+```
+
+The first command may show a healthy Docker CLI followed by a missing
+`dockerDesktopLinuxEngine`; that is expected evidence to stop using the
+Desktop context. The `KPFM` commands are the known-good native WSL Docker
+Engine on this machine. They may start the stopped distro. If the daemon is
+not active, check and start only that service inside KPFM:
+
+```powershell
+wsl -d KPFM -- systemctl is-active docker
+wsl -d KPFM -u root -- systemctl start docker
+wsl -d KPFM -- docker info
+```
+
+If `KPFM` is absent or these commands fail, record the exact output and hand
+the runtime repair to the local DevOps/operator lane. Do not substitute the
+ordinary `Ubuntu` distro when it only exposes Docker Desktop integration, and
+do not silently switch Docker contexts.
+
+### Run the real worktree through WSL
+
+Invoke Compose inside KPFM so the command cannot accidentally target Docker
+Desktop. Convert the actual Windows checkout to its WSL path, then verify the
+repository and rendered Compose configuration before starting services:
+
+```powershell
+$repo = (Get-Location).Path
+$wslRepo = (wsl -d KPFM -- wslpath -a $repo).Trim()
+wsl -d KPFM -- bash -lc "cd '$wslRepo' && git rev-parse --show-toplevel && git rev-parse HEAD && docker compose config"
+wsl -d KPFM -- bash -lc "cd '$wslRepo' && docker compose -p <unique-project-name> up -d"
+```
+
+Replace `<unique-project-name>` with a name unique to the agent and
+worktree. Keep Compose projects, published ports, databases, uploads, and
+network names isolated from every other agent. Never mount a scratchpad,
+temporary review checkout, stale demo checkout, or another agent's worktree.
+Before reporting a local demo, verify the mounted commit, URL, entity counts,
+required routes, and representative role behavior in a real browser. Healthy
+containers and HTTP 200 responses are not acceptance evidence.
+
+### Responsibility boundary
+
+Every coding agent is responsible for detecting the Desktop failure, switching
+to KPFM for its own work, and leaving exact blocker evidence if KPFM is not
+available. The local DevOps/operator lane is responsible for repairing or
+reprovisioning the workstation runtime and for any Desktop configuration
+changes. No coding agent should repair a Desktop lock by destroying shared
+Docker state or by changing product code.
