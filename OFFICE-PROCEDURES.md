@@ -7,12 +7,19 @@ stops, resumes, is submitted, becomes blocked or changes hands. In Progress
 means actual active implementation, not a queued dispatch or waiting for review.
 On stopping, move to Review for submitted work, Blocked for a named impediment,
 Ready for executable but paused/unclaimed work, or Done after acceptance.
-Where present, keep Engineering Gate consistent with Status. Review activity
-uses Review rather than pretending implementation is still active.
+Status represents workflow activity; Engineering Gate represents readiness.
+Submitted work awaiting a dependency may therefore be Status=Review and
+Engineering Gate=Blocked. Preserve the dependency and review queue together.
+Use the project's canonical field mapping; on a single-axis board a blocking
+impediment takes precedence over Review until resolved. Review activity uses
+Review rather than pretending implementation is still active.
 
 For delegated work, Agent Manager identifies the responsible agent, and
-Subagent Routing identifies the child name, native handle and role. Direct
-workers are explicitly direct, not invented subagents. GitHub accounts are
+Subagent Routing identifies the established child name or public-safe routing
+reference and role. Keep native handles in the access-controlled owner registry;
+disclose them only on explicitly private surfaces where authorized and necessary.
+Do not invent a name/card for an unnamed worker. Direct workers are explicitly
+direct, not invented subagents. GitHub accounts are
 access surfaces, not identities. Workers record transitions; managers verify
 them at dispatch and completion. Reassignment updates routing rather than
 leaving stale ownership. Do not post comments merely as heartbeat telemetry.
