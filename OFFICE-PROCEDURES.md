@@ -1,5 +1,29 @@
 # Office Procedures
 
+## Work-state and agent-routing contract
+
+Every worker and manager updates project metadata when implementation starts,
+stops, resumes, is submitted, becomes blocked or changes hands. In Progress
+means actual active implementation, not a queued dispatch or waiting for review.
+On stopping, move to Review for submitted work, Blocked for a named impediment,
+Ready for executable but paused/unclaimed work, or Done after acceptance.
+Where present, keep Engineering Gate consistent with Status. Review activity
+uses Review rather than pretending implementation is still active.
+
+For delegated work, Agent Manager identifies the responsible agent, and
+Subagent Routing identifies the child name, native handle and role. Direct
+workers are explicitly direct, not invented subagents. GitHub accounts are
+access surfaces, not identities. Workers record transitions; managers verify
+them at dispatch and completion. Reassignment updates routing rather than
+leaving stale ownership. Do not post comments merely as heartbeat telemetry.
+
+Shared AGENTS.md is an office-wide interface; owner-specific instruction files
+hold personal implementations and state. Audit this boundary during instruction
+edits and operational handoffs. General obligations belong in shared procedures;
+personal handles, assignments and history belong in scoped owner registries.
+Use references, not competing copies. Reading an owner's file grants neither
+that identity nor control of its children.
+
 Real, hard-won standing doctrine for every agent working shared code across
 this fleet. Every rule here exists because skipping it broke something real
 today. Read this before touching a shared branch, dispatching work, or
