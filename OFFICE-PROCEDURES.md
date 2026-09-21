@@ -230,3 +230,28 @@ separate file, and did you reuse the common ones instead of restating
 them?" Not a full-repo refactor -- apply it going forward, on every new
 piece of work, so new violations stop being created while existing debt is
 tracked and cleaned up separately.
+
+## 19. Unicode/emoji handling is a hard requirement, every agent, every tool call
+
+This whole agent ecosystem's identity system runs on emoji -- card-suit role
+markers, agent names, deck notation, even real filesystem folder names. It
+shows up in strings, JSON field values, filenames, and folder names, across
+every repo and every harness on this machine. Victor, verbatim, as an
+absolute rule, not a style preference: "Any single piece of code you write
+that handles or searches for a string -- if it cannot find unicode -- if it
+cannot deal with emoji -- it is a hard fail."
+
+Real incident, 2026-09-21: plain Bash `grep` without `-a` silently
+binary-mode-skipped matches in a session file with 296 real occurrences of
+the field being searched for, producing a confident, wrong negative result
+("field never set") that got reported as fact. A dedicated ripgrep-based
+search tool found all 296 instantly with zero special handling.
+
+Standing rule: never use plain Bash `grep` to search file *contents* in any
+of these repos -- use a dedicated ripgrep-based tool (Claude Code's `Grep`
+tool; Codex/Copilot's equivalent), confirmed UTF-8/emoji-safe by default. If
+raw shell grep is genuinely unavoidable, pass `-a` unconditionally, every
+time -- never conditionally on whether this particular content might have
+emoji in it, because in this ecosystem it always might. A surprising
+negative result on something well-established earns a second check with a
+different tool before it is reported as fact.
