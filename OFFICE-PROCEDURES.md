@@ -230,3 +230,167 @@ separate file, and did you reuse the common ones instead of restating
 them?" Not a full-repo refactor -- apply it going forward, on every new
 piece of work, so new violations stop being created while existing debt is
 tracked and cleaned up separately.
+
+## 16. Windows Docker Desktop failure: recover through the native WSL engine
+
+On Victor's workstation, Docker Desktop is not the dependable local runtime.
+After a reboot it can repeatedly fail while starting its inference manager,
+with an error mentioning
+`C:\\Users\\victorb\\AppData\\Local\\Docker\\run\\dockerInference` and a
+file that cannot be accessed. That message is a runtime boundary, not an
+application failure. Do not keep restarting Desktop, use "Reset to factory
+defaults," delete Docker volumes, or change application code to work around
+it.
+
+### Agent recovery sequence
+
+This is mandatory for every local container task, not only for shared-branch
+work. At the beginning of a coding turn that needs WordPress, Compose, or any
+other container, run the checked-in recovery helper first:
+
+```powershell
+& .\scripts\ensure-leagueos-docker.ps1 -Distro LeagueOS
+if ($LASTEXITCODE -ne 0) { throw 'LeagueOS WSL Docker is unavailable; stop and report the exact output.' }
+```
+
+Run it from this office-procedures checkout, or invoke it by absolute path if
+the agent's starting folder is another worktree. The helper only starts the
+selected `LeagueOS` or `LeagueOS_Red` distro's Docker service and verifies it; it does not reset
+Desktop, remove files, prune volumes, or change application code.
+
+Do not use a successful `docker` client version as proof that the engine is
+available. The Windows client can be installed while its Desktop server is
+dead. The only accepted engine checks for this machine are `wsl -d LeagueOS
+-- docker info` or `wsl -d LeagueOS_Red -- docker info` (or the helper's
+equivalent).
+
+Run the following checks from PowerShell after a reboot or whenever the
+Desktop engine is unavailable:
+
+```powershell
+docker info
+wsl -l -v
+wsl -d LeagueOS -- docker info
+wsl -d LeagueOS_Red -- docker info
+wsl -d LeagueOS -- docker compose version
+```
+
+The first command may show a healthy Docker CLI followed by a missing
+`dockerDesktopLinuxEngine`; that is expected evidence to stop using the
+Desktop context. Select exactly one approved LeagueOS distro for a task. If
+the daemon is not active, check and start only that service inside the
+selected distro:
+
+```powershell
+wsl -d <LeagueOS-or-LeagueOS_Red> -- systemctl is-active docker
+wsl -d <LeagueOS-or-LeagueOS_Red> -u root -- systemctl start docker
+wsl -d <LeagueOS-or-LeagueOS_Red> -- docker info
+```
+
+If both approved distros are absent or these commands fail, record the exact output and hand
+the runtime repair to the local DevOps/operator lane. Do not substitute the
+ordinary `Ubuntu` distro when it only exposes Docker Desktop integration, and
+do not silently switch Docker contexts.
+
+### Run the real worktree through WSL
+
+Invoke Compose inside the selected LeagueOS distro so the command cannot accidentally target Docker
+Desktop. Use a native checkout owned by that distro; do not convert a Windows
+`C:\` checkout into `/mnt/c` or bind-mount it through the WSL 9P bridge. The
+current runtime matrix uses `/var/lib/leagueos/staging` for staging and
+`/var/lib/leagueos/candidate` for candidate validation. Verify the repository
+and rendered Compose configuration before starting services:
+
+```powershell
+$distro = 'LeagueOS' # or LeagueOS_Red, selected once for this task
+$wslRepo = '/var/lib/leagueos/staging' # or /var/lib/leagueos/candidate
+```
+
+The shared LeagueOS grid is managed infrastructure. In **managed-grid mode**,
+inspect the existing project and containers, but do not run `docker compose up`
+or recreate them:
+
+```powershell
+wsl -d $distro -- bash -lc "cd '$wslRepo' && docker compose config"
+wsl -d $distro -- docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Image}}'
+```
+
+The grid owns fixed host-port ranges: blue/shared services use `8207-8210`
+and red services use `8307-8310`. A Compose project name alone does not isolate
+fixed host ports, container names, external volumes, or shared networks.
+
+In **isolated-lab mode**, use a separate native checkout and an explicit
+non-overlapping port, volume, network, container-name, and project-name matrix.
+Record that matrix before starting anything; reject any overlap with the grid.
+Never mount a scratchpad, temporary review checkout, stale demo checkout, or
+another agent's worktree.
+
+Before reporting a local demo, verify the mounted commit, URL, entity counts,
+required routes, and representative role behavior in a real browser. Healthy
+containers and HTTP 200 responses are not acceptance evidence.
+
+### Responsibility boundary
+
+Every coding agent is responsible for detecting the Desktop failure, selecting
+one approved LeagueOS distro for its own work, and leaving exact blocker evidence if both are not
+available. The local DevOps/operator lane is responsible for repairing or
+reprovisioning the workstation runtime and for any Desktop configuration
+changes. No coding agent should repair a Desktop lock by destroying shared
+Docker state or by changing product code.
+
+### After a reboot
+
+The recovery helper is intentionally the first step again after every system
+reboot. Do not wait for Docker Desktop to finish starting, and do not click
+"Reset to factory defaults". Once the helper passes, run Compose through the
+same selected LeagueOS distro and use a unique project name for the worktree. When the work
+is complete, record the WSL engine check, mounted worktree commit, and browser
+URL in the task evidence.
+
+## 17. PMO grooming is a continuous control loop
+
+The worker office and manager office share this rule. Their local `AGENTS.md`
+files may define different duties, but neither may weaken this lifecycle:
+
+`intake -> groom -> Ready -> one owner -> In Progress -> PR -> Review -> merge -> Done`
+
+An item is **groomed** only when it has one observable behavior, explicit
+acceptance criteria, a parent or documented reason to stand alone, represented
+dependencies, a release target when applicable, and a stable route to the
+responsible agent. Remove `needs-grooming` when those conditions are met. Do
+not create a `groomed` opposite label.
+
+Only parented, Ready items may be selected for implementation. At claim time,
+the dispatcher must set one unambiguous owner and move the same item to
+`In Progress` on the LeagueOS ENG board. An assignee without execution status,
+or execution status without an owner, is an invalid state that the next PMO
+pass must repair.
+
+Every PMO loop performs bounded work, in this order:
+
+1. Read new comments, review findings, PR events, and dependency changes.
+2. Promote durable decisions into issue bodies and acceptance criteria.
+3. Create or reuse child issues for independently schedulable follow-up work.
+4. Reparent issues when the actual product hierarchy becomes clearer.
+5. Remove stale opposite-state labels and reconcile contradictory board states.
+6. Select only Ready work for the next execution slice.
+7. Disposition every active PR: merge, request changes, close as obsolete, or
+   record a named external blocker.
+
+Comments remain historical evidence. They are not the durable work model. A
+comment that changes scope must produce a body update or a linked issue before
+the parent is treated as groomed. Never manufacture a comment as a heartbeat;
+the structured mutation is the evidence.
+
+## 18. Shared office contract
+
+AO_PFM worker agents, KPFM manager agents, reviewers, and PMO agents must load
+this file before shared-board or shared-branch work. The worker office owns
+implementation and tests; the manager office owns routing, integration, and
+board flow; PMO stewardship owns decomposition and acceptance. Those are
+different duties on one lifecycle, not competing status systems.
+
+When local office instructions disagree with this contract, stop and reconcile
+the instructions before mutating code or board state. Do not create a second
+ledger, duplicate status vocabulary, or parallel grooming label to work around
+the disagreement.
