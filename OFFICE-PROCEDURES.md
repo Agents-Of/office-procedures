@@ -304,14 +304,27 @@ and rendered Compose configuration before starting services:
 ```powershell
 $distro = 'LeagueOS' # or LeagueOS_Red, selected once for this task
 $wslRepo = '/var/lib/leagueos/staging' # or /var/lib/leagueos/candidate
-wsl -d $distro -- bash -lc "cd '$wslRepo' && git rev-parse --show-toplevel && git rev-parse HEAD && docker compose config"
-wsl -d $distro -- bash -lc "cd '$wslRepo' && docker compose -p <unique-project-name> up -d"
 ```
 
-Replace `<unique-project-name>` with a name unique to the agent and
-worktree. Keep Compose projects, published ports, databases, uploads, and
-network names isolated from every other agent. Never mount a scratchpad,
-temporary review checkout, stale demo checkout, or another agent's worktree.
+The shared LeagueOS grid is managed infrastructure. In **managed-grid mode**,
+inspect the existing project and containers, but do not run `docker compose up`
+or recreate them:
+
+```powershell
+wsl -d $distro -- bash -lc "cd '$wslRepo' && docker compose config"
+wsl -d $distro -- docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Image}}'
+```
+
+The grid owns fixed host-port ranges: blue/shared services use `8207-8210`
+and red services use `8307-8310`. A Compose project name alone does not isolate
+fixed host ports, container names, external volumes, or shared networks.
+
+In **isolated-lab mode**, use a separate native checkout and an explicit
+non-overlapping port, volume, network, container-name, and project-name matrix.
+Record that matrix before starting anything; reject any overlap with the grid.
+Never mount a scratchpad, temporary review checkout, stale demo checkout, or
+another agent's worktree.
+
 Before reporting a local demo, verify the mounted commit, URL, entity counts,
 required routes, and representative role behavior in a real browser. Healthy
 containers and HTTP 200 responses are not acceptance evidence.
