@@ -295,13 +295,15 @@ do not silently switch Docker contexts.
 ### Run the real worktree through WSL
 
 Invoke Compose inside the selected LeagueOS distro so the command cannot accidentally target Docker
-Desktop. Convert the actual Windows checkout to its WSL path, then verify the
-repository and rendered Compose configuration before starting services:
+Desktop. Use a native checkout owned by that distro; do not convert a Windows
+`C:\` checkout into `/mnt/c` or bind-mount it through the WSL 9P bridge. The
+current runtime matrix uses `/var/lib/leagueos/staging` for staging and
+`/var/lib/leagueos/candidate` for candidate validation. Verify the repository
+and rendered Compose configuration before starting services:
 
 ```powershell
-$repo = (Get-Location).Path
 $distro = 'LeagueOS' # or LeagueOS_Red, selected once for this task
-$wslRepo = (wsl -d $distro -- wslpath -a $repo).Trim()
+$wslRepo = '/var/lib/leagueos/staging' # or /var/lib/leagueos/candidate
 wsl -d $distro -- bash -lc "cd '$wslRepo' && git rev-parse --show-toplevel && git rev-parse HEAD && docker compose config"
 wsl -d $distro -- bash -lc "cd '$wslRepo' && docker compose -p <unique-project-name> up -d"
 ```

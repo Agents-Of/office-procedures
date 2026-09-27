@@ -20,6 +20,11 @@ During bootstrap, PFM agents may use authorized PPL staging access to validate
 the product against client data. Keep that access scoped and temporary. Do not
 put PPL credentials or raw client data into the PFM repositories.
 
+All real PPL domain, credential, data-import, and deployment operations must be
+routed through `PortlandPinballLeague/PPL_001_bootstrap`. Do not implement
+client-specific access directly in generic PFM repositories or in reusable
+LeagueOS packages.
+
 When bootstrap is complete, detach the PPL-specific connections, credentials,
 and deployment hooks from the development workflow. Publish LeagueOS through
 its npm distribution and let PPL consume the released package as an external
