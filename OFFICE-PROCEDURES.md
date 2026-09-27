@@ -249,19 +249,20 @@ work. At the beginning of a coding turn that needs WordPress, Compose, or any
 other container, run the checked-in recovery helper first:
 
 ```powershell
-& .\scripts\ensure-kpfm-docker.ps1
-if ($LASTEXITCODE -ne 0) { throw 'Native WSL Docker is unavailable; stop and report the exact output.' }
+& .\scripts\ensure-leagueos-docker.ps1 -Distro LeagueOS
+if ($LASTEXITCODE -ne 0) { throw 'LeagueOS WSL Docker is unavailable; stop and report the exact output.' }
 ```
 
 Run it from this office-procedures checkout, or invoke it by absolute path if
 the agent's starting folder is another worktree. The helper only starts the
-known `KPFM` distro's Docker service and verifies it; it does not reset
+selected `LeagueOS` or `LeagueOS_Red` distro's Docker service and verifies it; it does not reset
 Desktop, remove files, prune volumes, or change application code.
 
 Do not use a successful `docker` client version as proof that the engine is
 available. The Windows client can be installed while its Desktop server is
-dead. The only accepted engine check for this machine is `wsl -d KPFM --
-docker info` (or the helper's equivalent).
+dead. The only accepted engine checks for this machine are `wsl -d LeagueOS
+-- docker info` or `wsl -d LeagueOS_Red -- docker info` (or the helper's
+equivalent).
 
 Run the following checks from PowerShell after a reboot or whenever the
 Desktop engine is unavailable:
@@ -269,38 +270,40 @@ Desktop engine is unavailable:
 ```powershell
 docker info
 wsl -l -v
-wsl -d KPFM -- docker info
-wsl -d KPFM -- docker compose version
+wsl -d LeagueOS -- docker info
+wsl -d LeagueOS_Red -- docker info
+wsl -d LeagueOS -- docker compose version
 ```
 
 The first command may show a healthy Docker CLI followed by a missing
 `dockerDesktopLinuxEngine`; that is expected evidence to stop using the
-Desktop context. The `KPFM` commands are the known-good native WSL Docker
-Engine on this machine. They may start the stopped distro. If the daemon is
-not active, check and start only that service inside KPFM:
+Desktop context. Select exactly one approved LeagueOS distro for a task. If
+the daemon is not active, check and start only that service inside the
+selected distro:
 
 ```powershell
-wsl -d KPFM -- systemctl is-active docker
-wsl -d KPFM -u root -- systemctl start docker
-wsl -d KPFM -- docker info
+wsl -d <LeagueOS-or-LeagueOS_Red> -- systemctl is-active docker
+wsl -d <LeagueOS-or-LeagueOS_Red> -u root -- systemctl start docker
+wsl -d <LeagueOS-or-LeagueOS_Red> -- docker info
 ```
 
-If `KPFM` is absent or these commands fail, record the exact output and hand
+If both approved distros are absent or these commands fail, record the exact output and hand
 the runtime repair to the local DevOps/operator lane. Do not substitute the
 ordinary `Ubuntu` distro when it only exposes Docker Desktop integration, and
 do not silently switch Docker contexts.
 
 ### Run the real worktree through WSL
 
-Invoke Compose inside KPFM so the command cannot accidentally target Docker
+Invoke Compose inside the selected LeagueOS distro so the command cannot accidentally target Docker
 Desktop. Convert the actual Windows checkout to its WSL path, then verify the
 repository and rendered Compose configuration before starting services:
 
 ```powershell
 $repo = (Get-Location).Path
-$wslRepo = (wsl -d KPFM -- wslpath -a $repo).Trim()
-wsl -d KPFM -- bash -lc "cd '$wslRepo' && git rev-parse --show-toplevel && git rev-parse HEAD && docker compose config"
-wsl -d KPFM -- bash -lc "cd '$wslRepo' && docker compose -p <unique-project-name> up -d"
+$distro = 'LeagueOS' # or LeagueOS_Red, selected once for this task
+$wslRepo = (wsl -d $distro -- wslpath -a $repo).Trim()
+wsl -d $distro -- bash -lc "cd '$wslRepo' && git rev-parse --show-toplevel && git rev-parse HEAD && docker compose config"
+wsl -d $distro -- bash -lc "cd '$wslRepo' && docker compose -p <unique-project-name> up -d"
 ```
 
 Replace `<unique-project-name>` with a name unique to the agent and
@@ -313,8 +316,8 @@ containers and HTTP 200 responses are not acceptance evidence.
 
 ### Responsibility boundary
 
-Every coding agent is responsible for detecting the Desktop failure, switching
-to KPFM for its own work, and leaving exact blocker evidence if KPFM is not
+Every coding agent is responsible for detecting the Desktop failure, selecting
+one approved LeagueOS distro for its own work, and leaving exact blocker evidence if both are not
 available. The local DevOps/operator lane is responsible for repairing or
 reprovisioning the workstation runtime and for any Desktop configuration
 changes. No coding agent should repair a Desktop lock by destroying shared
@@ -325,6 +328,54 @@ Docker state or by changing product code.
 The recovery helper is intentionally the first step again after every system
 reboot. Do not wait for Docker Desktop to finish starting, and do not click
 "Reset to factory defaults". Once the helper passes, run Compose through the
-same WSL distro and use a unique project name for the worktree. When the work
+same selected LeagueOS distro and use a unique project name for the worktree. When the work
 is complete, record the WSL engine check, mounted worktree commit, and browser
 URL in the task evidence.
+
+## 17. PMO grooming is a continuous control loop
+
+The worker office and manager office share this rule. Their local `AGENTS.md`
+files may define different duties, but neither may weaken this lifecycle:
+
+`intake -> groom -> Ready -> one owner -> In Progress -> PR -> Review -> merge -> Done`
+
+An item is **groomed** only when it has one observable behavior, explicit
+acceptance criteria, a parent or documented reason to stand alone, represented
+dependencies, a release target when applicable, and a stable route to the
+responsible agent. Remove `needs-grooming` when those conditions are met. Do
+not create a `groomed` opposite label.
+
+Only parented, Ready items may be selected for implementation. At claim time,
+the dispatcher must set one unambiguous owner and move the same item to
+`In Progress` on the LeagueOS ENG board. An assignee without execution status,
+or execution status without an owner, is an invalid state that the next PMO
+pass must repair.
+
+Every PMO loop performs bounded work, in this order:
+
+1. Read new comments, review findings, PR events, and dependency changes.
+2. Promote durable decisions into issue bodies and acceptance criteria.
+3. Create or reuse child issues for independently schedulable follow-up work.
+4. Reparent issues when the actual product hierarchy becomes clearer.
+5. Remove stale opposite-state labels and reconcile contradictory board states.
+6. Select only Ready work for the next execution slice.
+7. Disposition every active PR: merge, request changes, close as obsolete, or
+   record a named external blocker.
+
+Comments remain historical evidence. They are not the durable work model. A
+comment that changes scope must produce a body update or a linked issue before
+the parent is treated as groomed. Never manufacture a comment as a heartbeat;
+the structured mutation is the evidence.
+
+## 18. Shared office contract
+
+AO_PFM worker agents, KPFM manager agents, reviewers, and PMO agents must load
+this file before shared-board or shared-branch work. The worker office owns
+implementation and tests; the manager office owns routing, integration, and
+board flow; PMO stewardship owns decomposition and acceptance. Those are
+different duties on one lifecycle, not competing status systems.
+
+When local office instructions disagree with this contract, stop and reconcile
+the instructions before mutating code or board state. Do not create a second
+ledger, duplicate status vocabulary, or parallel grooming label to work around
+the disagreement.
