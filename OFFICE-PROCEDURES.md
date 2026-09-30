@@ -329,6 +329,25 @@ Before reporting a local demo, verify the mounted commit, URL, entity counts,
 required routes, and representative role behavior in a real browser. Healthy
 containers and HTTP 200 responses are not acceptance evidence.
 
+### Browser cache freshness is a release invariant
+
+Every browser-visible asset—JavaScript, CSS, images, fonts, modules, and
+generated client bundles—must be served from a content-addressed URL whose
+version changes when its bytes change. Theme/plugin semantic versions,
+timestamps preserved by a mount, and a manually typed cache-busting query are
+not valid substitutes. The HTML document must be revalidated on every
+navigation in local, candidate, staging, and other human-validation targets;
+otherwise a browser can retain an old document which still points at an old
+asset URL. Production may cache HTML according to its explicit deployment
+policy, but it must still reference immutable content-addressed assets.
+
+Before asking a human to validate a browser fix, the implementing agent must
+verify the delivered page's asset URL contains the current content fingerprint,
+the served asset hash equals the committed source hash, and the validation
+target returns an HTML cache policy that forces revalidation. Never ask a human
+to type a query parameter, clear storage, hard-reload, or otherwise compensate
+for an agent's missing cache-invalidating deployment path.
+
 ### Responsibility boundary
 
 Every coding agent is responsible for detecting the Desktop failure, selecting
