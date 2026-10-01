@@ -211,6 +211,37 @@ luck, not a plan. Treat a discovered force-push to a shared branch as a live
 incident: verify via `compare` whether the new tip is `behind` the old one,
 and if so, recover the old SHA onto the branch before anything else proceeds.
 
+### Shared integration checkouts must be clean
+
+An integration branch is an **assembly lane**, never an implementation
+workbench. Its checkout and every shared container mount sourced from it must
+be clean at all times: `git status --porcelain` must produce no output, and
+`HEAD` must resolve to the declared remote integration tip before a deployment
+or browser-validation claim.
+
+Workers implement only in their own feature worktree and branch. They fetch
+and merge/rebase the current integration tip before beginning a new discrete
+slice and again before submitting the final PR. Their change reaches the
+integration checkout only through the reviewed merge. A running shared
+candidate container must mount that clean checkout, never a feature worktree
+and never a copied overlay of selected files.
+
+If an integration checkout is dirty, treat it as a routing incident:
+
+1. Do not `reset`, `clean`, overwrite, copy files into it, or restart it as a
+   substitute for attribution.
+2. Record the exact branch, `HEAD`, dirty paths, file hashes, and any available
+   author or source-commit evidence.
+3. Restore each attributable change to its owning feature branch/PR; create a
+   named recovery issue for any unsigned or unowned file.
+4. Recreate or update the integration checkout only from the remote declared
+   integration ref, then verify a clean status, mounted SHA, content-addressed
+   assets, and rendered browser behavior.
+
+A container whose source checkout is dirty has **unknown provenance**. It may
+be used to inspect or preserve evidence, but it is not a valid integration,
+review, release, or human-acceptance target.
+
 ## 15. Types and constants live in their own file, never alongside code
 
 Any value that would otherwise be hardcoded -- a constant, an enum, a type --
